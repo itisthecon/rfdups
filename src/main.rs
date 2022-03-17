@@ -1,7 +1,8 @@
 use std::fs;
 
 fn main() {
-    read_dir("./");
+    let dir = std::env::args().nth(1).expect("no dir given");
+    read_dir(dir.as_str());
 }
 
 fn read_dir(dir: &str) {
@@ -10,9 +11,10 @@ fn read_dir(dir: &str) {
     for entry in paths {
         let path = entry.unwrap().path();
         let metadata = fs::metadata(&path).unwrap();
-        if metadata.is_file() {
+        let attr = fs::symlink_metadata(&path).unwrap();
+        if attr.is_file() {
             println!("File: {} Length: {}", path.display(), metadata.len());
-        } else if metadata.is_dir() {
+        } else if attr.is_dir() {
             println!("Dir: {}", path.display());
             read_dir(path.to_str().unwrap());
         }
