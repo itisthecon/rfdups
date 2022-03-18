@@ -11,12 +11,12 @@ fn read_dir(dir: &str) {
 
     for entry in paths {
         let path = entry.unwrap().path();
-        let metadata = fs::metadata(&path).unwrap();
         let attr = fs::symlink_metadata(&path).unwrap();
         if attr.is_file() {
-            println!("File: {}\tinode: {}\tLength: {}", path.display(), metadata.ino(), metadata.len());
+            let metadata = fs::metadata(&path).unwrap();
+            println!("{}\t{}\t{}", path.display(), metadata.ino(), metadata.len());
         } else if attr.is_dir() {
-            println!("Dir: {}", path.display());
+            //println!("Dir: {}", path.display());
             read_dir(path.to_str().unwrap());
         }
     }
