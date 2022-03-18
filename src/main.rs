@@ -1,4 +1,6 @@
+extern crate checksum;
 use std::fs;
+use checksum::crc::Crc as crc;
 use std::os::unix::fs::MetadataExt;
 
 fn main() {
@@ -14,7 +16,8 @@ fn read_dir(dir: &str) {
         let attr = fs::symlink_metadata(&path).unwrap();
         if attr.is_file() {
             let metadata = fs::metadata(&path).unwrap();
-            println!("{}\t{}\t{}", path.display(), metadata.ino(), metadata.len());
+            let mut crc = crc::new(path.to_str().unwrap());
+            println!("{}\t{}\t{}\t{:X}", path.display(), metadata.ino(), metadata.len(), crc.checksum().unwrap().crc64);
         } else if attr.is_dir() {
             //println!("Dir: {}", path.display());
             read_dir(path.to_str().unwrap());
