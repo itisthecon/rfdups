@@ -1,4 +1,5 @@
 use std::fs;
+use std::os::unix::fs::MetadataExt;
 
 fn main() {
     let dir = std::env::args().nth(1).expect("no dir given");
@@ -13,7 +14,7 @@ fn read_dir(dir: &str) {
         let metadata = fs::metadata(&path).unwrap();
         let attr = fs::symlink_metadata(&path).unwrap();
         if attr.is_file() {
-            println!("File: {} Length: {}", path.display(), metadata.len());
+            println!("File: {}\tinode: {}\tLength: {}", path.display(), metadata.ino(), metadata.len());
         } else if attr.is_dir() {
             println!("Dir: {}", path.display());
             read_dir(path.to_str().unwrap());
