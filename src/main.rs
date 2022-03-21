@@ -33,8 +33,19 @@ fn read_dir(dir: &str, file_info: &mut HashMap<u64, Vec<String>>) {
             let metadata = fs::metadata(&path).unwrap();
             let mut crc = crc::new(path.to_str().unwrap());
             let filename = path.to_str().unwrap().to_string();
+            let checksum = crc.checksum().unwrap().crc64;
+            let inode = metadata.ino();
             //file_info.insert(crc.checksum().unwrap().crc64, filename);
-            //MAP.insert(crc.checksum().unwrap().crc64, "xxx".to_owned());
+            if !file_info.contains_key(&checksum) {
+                file_info.insert(checksum, vec![inode.to_string(), filename]);
+            } else {
+                let inode_str = &file_info.get_mut(&checksum).unwrap()[0];
+                if inode.to_string().eq(inode_str) {
+                    println!("found equal inode : {}\t filename : {}", inode_str, filename);
+                } else {
+                    file_info.get_mut(&checksum).unwrap().push(filename);
+                }
+            }
             println!("{}\t{}\t{}\t{:X}", path.display(), metadata.ino(), metadata.len(), crc.checksum().unwrap().crc64);
         } else if attr.is_dir() {
             read_dir(path.to_str().unwrap(), file_info);
