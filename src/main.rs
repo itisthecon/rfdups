@@ -55,18 +55,19 @@ fn read_dir(dir: &str, file_info: &mut HashMap<u64, Vec<String>>) {
             if metadata.len() < 1 {
                 return
             }
-            let mut crc = crc::new(path.to_str().unwrap());
+            //let mut crc = crc::new(path.to_str().unwrap());
             let filename = path.to_str().unwrap().to_string();
-            let checksum = crc.checksum().unwrap().crc64;
+            //let checksum = crc.checksum().unwrap().crc64;
+            let length = metadata.len();
             let inode = metadata.ino();
-            if !file_info.contains_key(&checksum) {
-                file_info.insert(checksum, vec![inode.to_string(), filename]);
+            if !file_info.contains_key(&length) {
+                file_info.insert(length, vec![inode.to_string(), filename]);
             } else {
-                let inode_str = &file_info.get_mut(&checksum).unwrap()[0];
+                let inode_str = &file_info.get_mut(&length).unwrap()[0];
                 if inode.to_string().eq(inode_str) {
                     //println!("found equal inode : {}\t filename : {}", inode_str, filename);
                 } else {
-                    file_info.get_mut(&checksum).unwrap().push(filename);
+                    file_info.get_mut(&length).unwrap().push(filename);
                 }
             }
             //println!("{}\t{}\t{}\t{:X}", path.display(), metadata.ino(), metadata.len(), crc.checksum().unwrap().crc64);
