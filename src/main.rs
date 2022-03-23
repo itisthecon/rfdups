@@ -5,6 +5,7 @@ use std::io::stdout;
 use crc32fast::Hasher;
 use std::collections::HashMap;
 use std::os::unix::fs::MetadataExt;
+use num_format::{Locale, ToFormattedString};
 use crossterm::{
     cursor::MoveUp,
     execute,
@@ -63,7 +64,7 @@ fn filehash_proc(file_info: &HashMap<u64, Vec<String>>, dup_files: &mut HashMap<
             }
         }
         count -= info_vec.len() as u32;
-        eprintln!("{} \tfiles left.", count);
+        eprintln!("{} \tfiles left.", count.to_formatted_string(&Locale::en));
         execute!(stdout(), MoveUp(1)).unwrap();
     }
 }
@@ -87,7 +88,7 @@ fn read_dir(dir: &str, file_info: &mut HashMap<u64, Vec<String>>, mut count: u32
                 file_info.get_mut(&length).unwrap().push(filename);
             }
             count += 1;
-            eprintln!("{} \tfiles found.", count);
+            eprintln!("{} \tfiles found.", count.to_formatted_string(&Locale::en));
             execute!(stdout(), MoveUp(1)).unwrap();
         } else if attr.is_dir() {
             count = read_dir(path.to_str().unwrap(), file_info, count);
