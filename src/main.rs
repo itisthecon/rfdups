@@ -1,8 +1,9 @@
-extern crate checksum;
 use std::fs;
-use checksum::crc::Crc as crc;
-use std::os::unix::fs::MetadataExt;
+use std::fs::File;
+use std::io::Read;
+use crc32fast::Hasher;
 use std::collections::HashMap;
+use std::os::unix::fs::MetadataExt;
 
 fn main() {
     let dir = std::env::args().nth(1).expect("no dir given");
@@ -10,9 +11,20 @@ fn main() {
     let mut dup_files: HashMap<u32, Vec<String>> = HashMap::new();
 
     read_dir(dir.as_str(), &mut file_info);
-    println!("{} kind of file size.", file_info.len());
     filehash_proc(&file_info, &mut dup_files);
     check_dup(&dup_files);
+
+}
+
+fn crc32(filename: &str) -> u32 {
+    let mut hasher = Hasher::new();
+    const BUFFER_SIZE: usize = 4096;
+    let mut buffer = [0; BUFFER_SIZE];
+    let mut file = File::open(&filename).unwrap();
+    let _ = file.read(&mut buffer);
+
+    hasher.update(&buffer);
+    hasher.finalize()
 }
 
 fn check_dup(file_info: &HashMap<u32, Vec<String>>) {
@@ -24,7 +36,6 @@ fn check_dup(file_info: &HashMap<u32, Vec<String>>) {
                 }
             }
             println!("");
-            //println!("{:?}", info_vec);
         }
     }
 }
@@ -35,8 +46,7 @@ fn filehash_proc(file_info: &HashMap<u64, Vec<String>>, dup_files: &mut HashMap<
             for (_index, path) in info_vec.iter().enumerate() {
                 let metadata = fs::metadata(&path).unwrap();
                 let inode = metadata.ino();
-                let mut crc = crc::new(path);
-                let checksum = crc.checksum().unwrap().crc32;
+                let checksum = crc32(path);
                 if dup_files.contains_key(&checksum) {
                     let inode_str = &dup_files.get_mut(&checksum).unwrap()[0];
                     if !inode.to_string().eq(inode_str) {
@@ -46,8 +56,6 @@ fn filehash_proc(file_info: &HashMap<u64, Vec<String>>, dup_files: &mut HashMap<
                     dup_files.insert(checksum, vec![inode.to_string(), path.to_string()]);
                 }
             }
-        } else {
-            println!("no dup size {:?}", info_vec);
         }
     }
 }
@@ -63,22 +71,13 @@ fn read_dir(dir: &str, file_info: &mut HashMap<u64, Vec<String>>) {
             if metadata.len() < 1 {
                 continue 'outer;
             }
-            //let mut crc = crc::new(path.to_str().unwrap());
             let filename = path.to_str().unwrap().to_string();
-            //let checksum = crc.checksum().unwrap().crc64;
             let length = metadata.len();
             if !file_info.contains_key(&length) {
-                //file_info.insert(length, vec![inode.to_string(), filename]);
                 file_info.insert(length, vec![filename]);
             } else {
-                //let inode_str = &file_info.get_mut(&length).unwrap()[0];
-                //if inode.to_string().eq(inode_str) {
-                    //println!("found equal inode : {}\t filename : {}", inode_str, filename);
-                //} else {
-                    file_info.get_mut(&length).unwrap().push(filename);
-                //}
+                file_info.get_mut(&length).unwrap().push(filename);
             }
-            //println!("{}\t{}\t{}\t{:X}", path.display(), metadata.ino(), metadata.len(), crc.checksum().unwrap().crc64);
         } else if attr.is_dir() {
             read_dir(path.to_str().unwrap(), file_info);
         }
