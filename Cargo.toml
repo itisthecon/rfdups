@@ -1,6 +1,14 @@
 [package]
 name = "rfdups"
 version = "0.0.1"
+authors = ["Tang Jun <ken@gos7.net>"]
+license = "MIT OR Apache-2.0"
+description = "a program for find duplicate files quick and simple"
+readme = "README.md"
+homepage = "https://github.com/itisthecon/rfdups"
+repository = "https://github.com/itisthecon/rfdups"
+keywords = ["cli", "duplicate files"]
+categories = ["command-line-utilities"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
