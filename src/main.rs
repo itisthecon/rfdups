@@ -27,14 +27,11 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-    println!("args is {:?}, dirs len is : {}", args, args.dirs.len());
 
-    //let dir = std::env::args().nth(1).expect("no dir given");
     let mut file_info: HashMap<u64, Vec<String>> = HashMap::new();
     let mut dup_files: HashMap<String, Vec<String>> = HashMap::new();
     let mut count: u32 = 0;
 
-    //et count = read_dir(args.dirs, &mut file_info, 0);
     for dir in &args.dirs {
         count += read_dir(&dir, &mut file_info, count)
     }
