@@ -1,3 +1,4 @@
+use clap::Parser;
 use crc32fast::Hasher;
 use crossterm::{cursor::MoveUp, execute, terminal};
 use num_format::{Locale, ToFormattedString};
@@ -6,7 +7,6 @@ use std::fs;
 use std::fs::File;
 use std::io::{stdout, Read};
 use std::os::unix::fs::MetadataExt;
-use clap::Parser;
 
 #[derive(Parser, Debug)]
 #[clap(name = "rfdups")]
@@ -14,16 +14,15 @@ use clap::Parser;
 #[clap(version)]
 #[clap(about = "find duplicate files in directory quickly", long_about = None)]
 struct Args {
-    #[clap(short('m'), long, help="summarize dupe information")]
+    #[clap(short('m'), long, help = "summarize dupe information")]
     summarize: bool,
 
-    #[clap(short, long, help="show size of duplicate files")]
+    #[clap(short, long, help = "show size of duplicate files")]
     size: bool,
 
-    #[clap(min_values=1, multiple_values=true, required=true)]
+    #[clap(min_values = 1, multiple_values = true, required = true)]
     dirs: Vec<String>,
 }
-
 
 fn main() {
     let args = Args::parse();
