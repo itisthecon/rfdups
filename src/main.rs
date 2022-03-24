@@ -1,14 +1,11 @@
 use std::fs;
 use std::fs::File;
-use std::io::{Read, stdout};
 use crc32fast::Hasher;
+use std::io::{Read, stdout};
 use std::collections::HashMap;
 use std::os::unix::fs::MetadataExt;
 use num_format::{Locale, ToFormattedString};
-use crossterm::{
-    cursor::MoveUp,terminal,
-    execute,
-};
+use crossterm::{ cursor::MoveUp,terminal, execute };
 
 fn main() {
     let dir = std::env::args().nth(1).expect("no dir given");
