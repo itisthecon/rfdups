@@ -7,7 +7,7 @@ description = "a program for find duplicate files quick and simple"
 readme = "README.md"
 homepage = "https://github.com/itisthecon/rfdups"
 repository = "https://github.com/itisthecon/rfdups"
-keywords = ["cli", "duplicate files"]
+keywords = ["cli", "tool"]
 categories = ["command-line-utilities"]
 edition = "2021"
 
