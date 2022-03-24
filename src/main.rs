@@ -14,7 +14,8 @@ use crossterm::{
 fn main() {
     let dir = std::env::args().nth(1).expect("no dir given");
     let mut file_info: HashMap<u64, Vec<String>> = HashMap::new();
-    let mut dup_files: HashMap<u32, Vec<String>> = HashMap::new();
+    //let mut dup_files: HashMap<u32, Vec<String>> = HashMap::new();
+    let mut dup_files: HashMap<String, Vec<String>> = HashMap::new();
 
     let count = read_dir(dir.as_str(), &mut file_info, 0);
     filehash_proc(&file_info, &mut dup_files, count);
@@ -33,7 +34,7 @@ fn crc32(filename: &str) -> u32 {
     hasher.finalize()
 }
 
-fn check_dup(file_info: &HashMap<u32, Vec<String>>) {
+fn check_dup(file_info: &HashMap<String, Vec<String>>) {
     for (_inode, info_vec) in &*file_info {
         if info_vec.len() > 2 {
             for (index, value) in info_vec.iter().enumerate() {
@@ -46,20 +47,22 @@ fn check_dup(file_info: &HashMap<u32, Vec<String>>) {
     }
 }
 
-fn filehash_proc(file_info: &HashMap<u64, Vec<String>>, dup_files: &mut HashMap<u32, Vec<String>>, mut count: u32) {
-    for (_inode, info_vec) in &*file_info {
+fn filehash_proc(file_info: &HashMap<u64, Vec<String>>, dup_files: &mut HashMap<String, Vec<String>>, mut count: u32) {
+    for (len, info_vec) in &*file_info {
         if info_vec.len() > 1 {
             for (_index, path) in info_vec.iter().enumerate() {
                 let metadata = fs::metadata(&path).unwrap();
                 let inode = metadata.ino();
-                let checksum = crc32(path);
-                if dup_files.contains_key(&checksum) {
-                    let inode_str = &dup_files.get_mut(&checksum).unwrap()[0];
+                //let checksum = crc32(path);
+                let key = format!("{}{}", len, crc32(path));
+
+                if dup_files.contains_key(&key) {
+                    let inode_str = &dup_files.get_mut(&key).unwrap()[0];
                     if !inode.to_string().eq(inode_str) {
-                        dup_files.get_mut(&checksum).unwrap().push(path.to_string());
+                        dup_files.get_mut(&key).unwrap().push(path.to_string());
                     }
                 } else {
-                    dup_files.insert(checksum, vec![inode.to_string(), path.to_string()]);
+                    dup_files.insert(key, vec![inode.to_string(), path.to_string()]);
                 }
             }
         }
