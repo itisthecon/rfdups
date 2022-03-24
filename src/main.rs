@@ -1,20 +1,18 @@
 use std::fs;
 use std::fs::File;
-use std::io::Read;
-use std::io::stdout;
+use std::io::{Read, stdout};
 use crc32fast::Hasher;
 use std::collections::HashMap;
 use std::os::unix::fs::MetadataExt;
 use num_format::{Locale, ToFormattedString};
 use crossterm::{
-    cursor::MoveUp,
+    cursor::MoveUp,terminal,
     execute,
 };
 
 fn main() {
     let dir = std::env::args().nth(1).expect("no dir given");
     let mut file_info: HashMap<u64, Vec<String>> = HashMap::new();
-    //let mut dup_files: HashMap<u32, Vec<String>> = HashMap::new();
     let mut dup_files: HashMap<String, Vec<String>> = HashMap::new();
 
     let count = read_dir(dir.as_str(), &mut file_info, 0);
@@ -35,9 +33,14 @@ fn crc32(filename: &str) -> u32 {
 }
 
 fn check_dup(file_info: &HashMap<String, Vec<String>>) {
-    for (_inode, info_vec) in &*file_info {
-        if info_vec.len() > 2 {
-            for (index, value) in info_vec.iter().enumerate() {
+    let screen_width = terminal::size().unwrap().0 as usize;
+    println!("{}", std::iter::repeat(" ").take(screen_width).collect::<String>());
+    execute!(stdout(), MoveUp(1)).unwrap();
+    for (f_info, fn_vec) in &*file_info {
+        if fn_vec.len() > 2 {
+            let v: Vec<&str> = f_info.split("_").collect();
+            println!("{} bytes each:", v[0]);
+            for (index, value) in fn_vec.iter().enumerate() {
                 if index > 0 {
                     println!("{}", value);
                 }
@@ -53,8 +56,7 @@ fn filehash_proc(file_info: &HashMap<u64, Vec<String>>, dup_files: &mut HashMap<
             for (_index, path) in info_vec.iter().enumerate() {
                 let metadata = fs::metadata(&path).unwrap();
                 let inode = metadata.ino();
-                //let checksum = crc32(path);
-                let key = format!("{}{}", len, crc32(path));
+                let key = format!("{}_{}", len, crc32(path));
 
                 if dup_files.contains_key(&key) {
                     let inode_str = &dup_files.get_mut(&key).unwrap()[0];
