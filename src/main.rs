@@ -6,15 +6,40 @@ use std::fs;
 use std::fs::File;
 use std::io::{stdout, Read};
 use std::os::unix::fs::MetadataExt;
+use clap::Parser;
+
+#[derive(Parser, Debug)]
+#[clap(name = "rfdups")]
+#[clap(author = "Tang Jun <ken@gos7.net>")]
+#[clap(version)]
+#[clap(about = "find duplicate files in directory quickly", long_about = None)]
+struct Args {
+    #[clap(short('m'), long, help="summarize dupe information")]
+    summarize: bool,
+
+    #[clap(short, long, help="show size of duplicate files")]
+    size: bool,
+
+    #[clap(min_values=1, multiple_values=true, required=true)]
+    dirs: Vec<String>,
+}
+
 
 fn main() {
-    let dir = std::env::args().nth(1).expect("no dir given");
+    let args = Args::parse();
+    println!("args is {:?}, dirs len is : {}", args, args.dirs.len());
+
+    //let dir = std::env::args().nth(1).expect("no dir given");
     let mut file_info: HashMap<u64, Vec<String>> = HashMap::new();
     let mut dup_files: HashMap<String, Vec<String>> = HashMap::new();
+    let mut count: u32 = 0;
 
-    let count = read_dir(dir.as_str(), &mut file_info, 0);
+    //et count = read_dir(args.dirs, &mut file_info, 0);
+    for dir in &args.dirs {
+        count += read_dir(&dir, &mut file_info, count)
+    }
     filehash_proc(&file_info, &mut dup_files, count);
-    check_dup(&dup_files);
+    check_dup(&dup_files, &args);
 }
 
 fn crc32(filename: &str) -> u32 {
@@ -40,7 +65,7 @@ fn clean_up_line() {
     execute!(stdout(), MoveUp(1)).unwrap();
 }
 
-fn check_dup(file_info: &HashMap<String, Vec<String>>) {
+fn check_dup(file_info: &HashMap<String, Vec<String>>, options: &Args) {
     let mut total_size: u64 = 0;
     let mut file_num: u32 = 0;
 
@@ -54,7 +79,9 @@ fn check_dup(file_info: &HashMap<String, Vec<String>>) {
             total_size += f_size * dup_num as u64;
             file_num += dup_num as u32;
 
-            println!("{} bytes each:", v[0]);
+            if options.size {
+                println!("{} bytes each:", v[0]);
+            }
             for (index, value) in fn_vec.iter().enumerate() {
                 if index > 0 {
                     println!("{}", value);
@@ -64,10 +91,12 @@ fn check_dup(file_info: &HashMap<String, Vec<String>>) {
         }
     }
 
-    println!(
-        "{} duplicate files, occupying {} bytes",
-        file_num, total_size
-    );
+    if options.summarize {
+        println!(
+            "{} duplicate files, occupying {} bytes",
+            file_num, total_size
+        );
+    }
 }
 
 fn filehash_proc(
@@ -140,6 +169,5 @@ fn read_dir(dir: &str, file_info: &mut HashMap<u64, Vec<String>>, mut count: u32
             count = read_dir(path.to_str().unwrap(), file_info, count);
         }
     }
-
     count
 }
