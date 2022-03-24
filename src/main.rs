@@ -1,11 +1,11 @@
+use crc32fast::Hasher;
+use crossterm::{cursor::MoveUp, execute, terminal};
+use num_format::{Locale, ToFormattedString};
+use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
-use crc32fast::Hasher;
-use std::io::{Read, stdout};
-use std::collections::HashMap;
+use std::io::{stdout, Read};
 use std::os::unix::fs::MetadataExt;
-use num_format::{Locale, ToFormattedString};
-use crossterm::{ cursor::MoveUp,terminal, execute };
 
 fn main() {
     let dir = std::env::args().nth(1).expect("no dir given");
@@ -15,7 +15,6 @@ fn main() {
     let count = read_dir(dir.as_str(), &mut file_info, 0);
     filehash_proc(&file_info, &mut dup_files, count);
     check_dup(&dup_files);
-
 }
 
 fn crc32(filename: &str) -> u32 {
@@ -32,7 +31,12 @@ fn crc32(filename: &str) -> u32 {
 fn clean_up_line() {
     // clean previous out put
     let screen_width = terminal::size().unwrap().0 as usize;
-    println!("{}", std::iter::repeat(" ").take(screen_width).collect::<String>());
+    println!(
+        "{}",
+        std::iter::repeat(" ")
+            .take(screen_width)
+            .collect::<String>()
+    );
     execute!(stdout(), MoveUp(1)).unwrap();
 }
 
@@ -60,10 +64,17 @@ fn check_dup(file_info: &HashMap<String, Vec<String>>) {
         }
     }
 
-    println!("{} duplicate files, occupying {} bytes", file_num, total_size);
+    println!(
+        "{} duplicate files, occupying {} bytes",
+        file_num, total_size
+    );
 }
 
-fn filehash_proc(file_info: &HashMap<u64, Vec<String>>, dup_files: &mut HashMap<String, Vec<String>>, mut count: u32) {
+fn filehash_proc(
+    file_info: &HashMap<u64, Vec<String>>,
+    dup_files: &mut HashMap<String, Vec<String>>,
+    mut count: u32,
+) {
     let indicator = ['/', '|', '\\', '-'];
     let mut progress: usize = 0;
 
@@ -86,7 +97,11 @@ fn filehash_proc(file_info: &HashMap<u64, Vec<String>>, dup_files: &mut HashMap<
         }
         count -= info_vec.len() as u32;
         clean_up_line();
-        eprintln!("{}\t{} \tfiles left.", indicator[progress], count.to_formatted_string(&Locale::en));
+        eprintln!(
+            "{}\t{} \tfiles left.",
+            indicator[progress],
+            count.to_formatted_string(&Locale::en)
+        );
         execute!(stdout(), MoveUp(1)).unwrap();
         progress = (progress + 1) % 4;
     }
@@ -113,7 +128,11 @@ fn read_dir(dir: &str, file_info: &mut HashMap<u64, Vec<String>>, mut count: u32
                 file_info.get_mut(&length).unwrap().push(filename);
             }
             count += 1;
-            eprintln!("{}\t{} \tfiles found.", indicator[progress], count.to_formatted_string(&Locale::en));
+            eprintln!(
+                "{}\t{} \tfiles found.",
+                indicator[progress],
+                count.to_formatted_string(&Locale::en)
+            );
             execute!(stdout(), MoveUp(1)).unwrap();
             progress = (progress + 1) % 4;
             clean_up_line();
