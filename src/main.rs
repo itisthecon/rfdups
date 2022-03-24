@@ -33,12 +33,22 @@ fn crc32(filename: &str) -> u32 {
 }
 
 fn check_dup(file_info: &HashMap<String, Vec<String>>) {
+    // clean previous out put
     let screen_width = terminal::size().unwrap().0 as usize;
     println!("{}", std::iter::repeat(" ").take(screen_width).collect::<String>());
     execute!(stdout(), MoveUp(1)).unwrap();
+
+    let mut total_size: u64 = 0;
+    let mut file_num: u32 = 0;
+
     for (f_info, fn_vec) in &*file_info {
         if fn_vec.len() > 2 {
             let v: Vec<&str> = f_info.split("_").collect();
+            let f_size = v[0].parse::<u64>().unwrap();
+            let dup_num = fn_vec.len() - 2;
+            total_size += f_size * dup_num as u64;
+            file_num += dup_num as u32;
+
             println!("{} bytes each:", v[0]);
             for (index, value) in fn_vec.iter().enumerate() {
                 if index > 0 {
@@ -48,6 +58,8 @@ fn check_dup(file_info: &HashMap<String, Vec<String>>) {
             println!("");
         }
     }
+
+    println!("{} duplicate files, occupying {} bytes", file_num, total_size);
 }
 
 fn filehash_proc(file_info: &HashMap<u64, Vec<String>>, dup_files: &mut HashMap<String, Vec<String>>, mut count: u32) {
