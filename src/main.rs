@@ -32,14 +32,18 @@ fn crc32(filename: &str) -> u32 {
     hasher.finalize()
 }
 
-fn check_dup(file_info: &HashMap<String, Vec<String>>) {
+fn clean_up_line() {
     // clean previous out put
     let screen_width = terminal::size().unwrap().0 as usize;
     println!("{}", std::iter::repeat(" ").take(screen_width).collect::<String>());
     execute!(stdout(), MoveUp(1)).unwrap();
+}
 
+fn check_dup(file_info: &HashMap<String, Vec<String>>) {
     let mut total_size: u64 = 0;
     let mut file_num: u32 = 0;
+
+    clean_up_line();
 
     for (f_info, fn_vec) in &*file_info {
         if fn_vec.len() > 2 {
@@ -63,6 +67,9 @@ fn check_dup(file_info: &HashMap<String, Vec<String>>) {
 }
 
 fn filehash_proc(file_info: &HashMap<u64, Vec<String>>, dup_files: &mut HashMap<String, Vec<String>>, mut count: u32) {
+    let indicator = ['/', '|', '\\', '-'];
+    let mut progress: usize = 0;
+
     for (len, info_vec) in &*file_info {
         if info_vec.len() > 1 {
             for (_index, path) in info_vec.iter().enumerate() {
@@ -81,13 +88,17 @@ fn filehash_proc(file_info: &HashMap<u64, Vec<String>>, dup_files: &mut HashMap<
             }
         }
         count -= info_vec.len() as u32;
-        eprintln!("{} \tfiles left.", count.to_formatted_string(&Locale::en));
+        clean_up_line();
+        eprintln!("{}\t{} \tfiles left.", indicator[progress], count.to_formatted_string(&Locale::en));
         execute!(stdout(), MoveUp(1)).unwrap();
+        progress = (progress + 1) % 4;
     }
 }
 
 fn read_dir(dir: &str, file_info: &mut HashMap<u64, Vec<String>>, mut count: u32) -> u32 {
     let paths = fs::read_dir(dir).unwrap();
+    let indicator = ['-', '\\', '|', '/'];
+    let mut progress: usize = 0;
 
     'outer: for entry in paths {
         let path = entry.unwrap().path();
@@ -105,8 +116,10 @@ fn read_dir(dir: &str, file_info: &mut HashMap<u64, Vec<String>>, mut count: u32
                 file_info.get_mut(&length).unwrap().push(filename);
             }
             count += 1;
-            eprintln!("{} \tfiles found.", count.to_formatted_string(&Locale::en));
+            eprintln!("{}\t{} \tfiles found.", indicator[progress], count.to_formatted_string(&Locale::en));
             execute!(stdout(), MoveUp(1)).unwrap();
+            progress = (progress + 1) % 4;
+            clean_up_line();
         } else if attr.is_dir() {
             count = read_dir(path.to_str().unwrap(), file_info, count);
         }
